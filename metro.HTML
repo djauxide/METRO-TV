@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>Metropolitan TV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a0a; color: white; margin: 0; }
+        .live-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-950">
+    <!-- Header -->
+    <header class="fixed top-0 w-full bg-gray-950/90 backdrop-blur border-b border-gray-800 z-50">
+        <div class="flex items-center gap-3 px-4 py-3">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">M</div>
+            <h1 class="text-xl font-bold">Metro<span class="text-blue-500">TV</span></h1>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-16 p-4 max-w-6xl mx-auto">
+        <!-- Video Player -->
+        <div class="mb-6">
+            <div class="relative bg-black rounded-xl overflow-hidden aspect-video">
+                <video id="video" class="w-full h-full" controls playsinline></video>
+                <div class="absolute top-4 left-4 bg-red-600 px-3 py-1 rounded-full flex items-center gap-2">
+                    <div class="w-2 h-2 bg-white rounded-full live-badge"></div>
+                    <span class="text-sm font-bold">LIVE</span>
+                </div>
+            </div>
+            <h2 id="channelTitle" class="text-2xl font-bold mt-4">Select a Channel</h2>
+            <p id="channelDesc" class="text-gray-400">Click any channel below to start watching</p>
+        </div>
+
+        <!-- Channels -->
+        <div id="channels" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </main>
+
+    <script>
+        const channels = [
+            { name: "Big Buck Bunny", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", img: "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=400&h=300&fit=crop", cat: "Movies" },
+            { name: "Test Stream", url: "https://test-streams.mux.dev/test_001/stream.m3u8", img: "https://images.unsplash.com/photo-1461896836934-1532487502-434ff70b5fb0?w=400&h=300&fit=crop", cat: "Sports" },
+            { name: "TOS", url: "https://test-streams.mux.dev/tos_ismc/main.m3u8", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop", cat: "Movies" },
+            { name: "DASH Test", url: "https://test-streams.mux.dev/dai-discontinuity-deltatre/manifest.m3u8", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=300&fit=crop", cat: "Entertainment" }
+        ];
+
+        let hls = null;
+
+        function loadChannel(idx) {
+            const ch = channels[idx];
+            document.getElementById('channelTitle').textContent = ch.name;
+            document.getElementById('channelDesc').textContent = ch.cat + ' • Click play to start';
+            
+            const video = document.getElementById('video');
+            
+            if (hls) { hls.destroy(); hls = null; }
+            
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(ch.url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = ch.url;
+                video.play();
+            }
+        }
+
+        // Render channels
+        document.getElementById('channels').innerHTML = channels.map((ch, i) => `
+            <div onclick="loadChannel(${i})" class="cursor-pointer bg-gray-900 rounded-xl overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all">
+                <div class="relative aspect-video">
+                    <img src="${ch.img}" class="w-full h-full object-cover">
+                    <div class="absolute top-2 left-2 bg-red-600 text-xs font-bold px-2 py-1 rounded">LIVE</div>
+                </div>
+                <div class="p-3">
+                    <h3 class="font-bold">${ch.name}</h3>
+                    <p class="text-sm text-gray-400">${ch.cat}</p>
+                </div>
+            </div>
+        `).join('');
+
+        // Load first channel automatically
+        loadChannel(0);
+    </script>
+</body>
+</html>
